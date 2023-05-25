@@ -8,4 +8,4 @@ https://drive.google.com/drive/folders/1udxSmKlTU1gG0vKMj-kEd91CSBJMI-OF
 https://sharelatex.tum.de/7138674284xmjqszfcktdq
 
 ## Slides
-TODO
+https://docs.google.com/presentation/d/1mAKqjMuWcvD22SPktyjF2vaK0tGU_KnGtLRimdwqApg/edit?usp=sharing
