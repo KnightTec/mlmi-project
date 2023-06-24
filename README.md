@@ -7,5 +7,26 @@ https://drive.google.com/drive/folders/1udxSmKlTU1gG0vKMj-kEd91CSBJMI-OF
 ## ShareLatex
 https://sharelatex.tum.de/7138674284xmjqszfcktdq
 
-## Slides
-https://docs.google.com/presentation/d/1mAKqjMuWcvD22SPktyjF2vaK0tGU_KnGtLRimdwqApg/edit?usp=sharing
+## Baseline Implementations
+### Contrastive Multimodal Representation Learning
+- [ImageBind](https://github.com/facebookresearch/ImageBind)
+- [CLIP](https://github.com/openai/CLIP)
+- [MS-CLIP](https://github.com/Hxyou/MSCLIP)
+- [CoDi](https://github.com/microsoft/i-Code/tree/main/i-Code-V3)
+
+### Supervised Brain Imaging SOTA (to compare learned representation quality)
+- [RadImageNet](https://github.com/BMEII-AI/RadImageNet)
+- TODO: segmentation & classification
+- TODO: Tumor Detection and Classification
+- TODO: Neurodegenerative Disease Diagnosis
+
+## Brain multimodal datasets
+- [iEEG-fMRI](https://www.nature.com/articles/s41597-022-01173-0)
+- [fMRI-Image](http://naturalscenesdataset.org/)
+- [MRI-CT-PET](http://www.oasis-brains.org/)
+- TODO: https://github.com/sfikas/medical-imaging-datasets
+
+## Medical multimodal reviews
+
+
+## 
