@@ -17,8 +17,8 @@ https://sharelatex.tum.de/7138674284xmjqszfcktdq
 ### Supervised Brain Imaging SOTA (to compare learned representation quality)
 - [RadImageNet](https://github.com/BMEII-AI/RadImageNet)
 - [MedMNIST](https://medmnist.com/)
-- TODO: segmentation & classification
-- TODO: Tumor Detection and Classification
+- [Brain Tumor Segmentation 2020](https://arxiv.org/abs/2004.10664)
+- [Segmentation 2023](https://arxiv.org/abs/2306.03730)
 - TODO: Neurodegenerative Disease Diagnosis
 - TODO: fMRI to Image
 
@@ -29,6 +29,7 @@ https://sharelatex.tum.de/7138674284xmjqszfcktdq
 - [MRI-PET_DTI](https://tadpole.grand-challenge.org/Data/)
 - TODO: https://github.com/sfikas/medical-imaging-datasets
 
-### Medical multimodal reviews
-- [Review 2022](https://drive.google.com/file/d/1Bm9KTSyNnRDZkC6DUCkqacq80k18Jk4X/view?usp=drive_link)
-- [Review 2023](https://www.nature.com/articles/s41746-023-00811-0)
+### Reviews
+- [Multimodal medical Review 2022](https://drive.google.com/file/d/1Bm9KTSyNnRDZkC6DUCkqacq80k18Jk4X/view?usp=drive_link)
+- [Multimodal medical Review 2023](https://www.nature.com/articles/s41746-023-00811-0)
+- [Medical imaging review 2022](https://www.nature.com/articles/s41746-022-00592-y)
