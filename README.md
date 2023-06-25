@@ -13,12 +13,14 @@ https://sharelatex.tum.de/7138674284xmjqszfcktdq
 - [CLIP](https://github.com/openai/CLIP)
 - [MS-CLIP](https://github.com/Hxyou/MSCLIP)
 - [CoDi](https://github.com/microsoft/i-Code/tree/main/i-Code-V3)
+- [Swin UNETR](https://github.com/Project-MONAI/research-contributions/tree/main/SwinUNETR): Pre-trained CT & MRI Encoders
 
 ### Supervised Brain Imaging SOTA (to compare learned representation quality)
 - [RadImageNet](https://github.com/BMEII-AI/RadImageNet)
 - [MedMNIST](https://medmnist.com/)
 - [Brain Tumor Segmentation 2020](https://arxiv.org/abs/2004.10664)
 - [Segmentation 2023](https://arxiv.org/abs/2306.03730)
+- [The Brain Tumor Segmentation (BraTS) Challenge 2023](https://arxiv.org/abs/2305.09011v3)
 - TODO: Neurodegenerative Disease Diagnosis
 - TODO: fMRI to Image
 
