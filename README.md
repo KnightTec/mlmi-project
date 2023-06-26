@@ -34,4 +34,3 @@ https://sharelatex.tum.de/7138674284xmjqszfcktdq
 ### Reviews
 - [Multimodal medical Review 2022](https://drive.google.com/file/d/1Bm9KTSyNnRDZkC6DUCkqacq80k18Jk4X/view?usp=drive_link)
 - [Multimodal medical Review 2023](https://www.nature.com/articles/s41746-023-00811-0)
-- [Medical imaging review 2022](https://www.nature.com/articles/s41746-022-00592-y)
