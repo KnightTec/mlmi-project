@@ -22,15 +22,15 @@ https://sharelatex.tum.de/7138674284xmjqszfcktdq
 - [Segmentation 2023](https://arxiv.org/abs/2306.03730)
 - [The Brain Tumor Segmentation (BraTS) Challenge 2023](https://arxiv.org/abs/2305.09011v3)
 - TODO: Neurodegenerative Disease Diagnosis
-- TODO: fMRI to Image
+- TODO: fMRI to Image aka mind reading
 
 ### Brain multimodal datasets
 - [iEEG-fMRI](https://www.nature.com/articles/s41597-022-01173-0)
 - [fMRI-Image](http://naturalscenesdataset.org/)
 - [MRI-CT-PET](http://www.oasis-brains.org/)
-- [MRI-PET_DTI](https://tadpole.grand-challenge.org/Data/)
+- [MRI-PET-DTI](https://tadpole.grand-challenge.org/Data/)
+- TODO: MEG & SPECT
 - TODO: https://github.com/sfikas/medical-imaging-datasets
 
 ### Reviews
 - [Multimodal medical Review 2022](https://drive.google.com/file/d/1Bm9KTSyNnRDZkC6DUCkqacq80k18Jk4X/view?usp=drive_link)
-- [Multimodal medical Review 2023](https://www.nature.com/articles/s41746-023-00811-0)
