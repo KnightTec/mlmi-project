@@ -34,3 +34,10 @@ https://sharelatex.tum.de/7138674284xmjqszfcktdq
 
 ### Reviews
 - [Multimodal medical Review 2022](https://drive.google.com/file/d/1Bm9KTSyNnRDZkC6DUCkqacq80k18Jk4X/view?usp=drive_link)
+
+
+# Plan
+- using EEG to learn improved fMRI representations
+- use Dings eeg encoder + Svin-UNETR fMRI encoder
+- contrastive learning between representations
+- test task: alzheimer classification
