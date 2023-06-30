@@ -11,7 +11,9 @@ https://sharelatex.tum.de/7138674284xmjqszfcktdq
 ### Contrastive Multimodal Representation Learning
 - [ImageBind](https://github.com/facebookresearch/ImageBind)
 - [CLIP](https://github.com/openai/CLIP)
+- [DeCLIP](https://github.com/Sense-GVT/DeCLIP)
 - [MS-CLIP](https://github.com/Hxyou/MSCLIP)
+- [MaskCLIP](https://github.com/LightDXY/MaskCLIP)
 - [CoDi](https://github.com/microsoft/i-Code/tree/main/i-Code-V3)
 - [Swin UNETR](https://github.com/Project-MONAI/research-contributions/tree/main/SwinUNETR): Pre-trained CT & MRI Encoders
 
