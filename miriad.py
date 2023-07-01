@@ -6,8 +6,14 @@ import random
 
 class MiriadDataset(Dataset):
 
-    def __init__(self, root : str, train : bool) -> None:
+    def __init__(self, root : str, train : bool, transform=None, crop=0.0) -> None:
         super().__init__()
+
+        if not 0 <= crop < 1:
+            raise ValueError("crop parameter must be between 0 and 1")
+        self._crop = crop * 0.5
+
+        self._transform = transform
 
         self._file_list = []
         file_format = ".nii"
@@ -33,6 +39,7 @@ class MiriadDataset(Dataset):
         else:
             self._file_list = self._file_list[-int(0.2 * len(self._file_list)) :]
 
+
     def __len__(self):
         return len(self._file_list)
     
@@ -47,8 +54,20 @@ class MiriadDataset(Dataset):
             assert False
 
         mri = nib.load(file_name)
-
         mri_data = mri.get_fdata()
 
+        if self._crop > 0:
+            start_idx_0 = int(mri_data.shape[0] * self._crop) 
+            end_idx_0 = int(mri_data.shape[0] * (1.0 - self._crop))
+            start_idx_1 = int(mri_data.shape[1] * self._crop) 
+            end_idx_1 = int(mri_data.shape[1] * (1.0 - self._crop))
+            start_idx_2 = int(mri_data.shape[2] * self._crop) 
+            end_idx_2 = int(mri_data.shape[2] * (1.0 - self._crop))
+            mri_data = mri_data[start_idx_0:end_idx_0, start_idx_1:end_idx_1, start_idx_2:end_idx_2]
+
+        if self._transform:
+            mri_data = self._transform(mri_data)
+
+        mri_data = mri_data.reshape((1, *mri_data.shape))
         return mri_data, label
     
