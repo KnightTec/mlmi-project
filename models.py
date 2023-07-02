@@ -13,7 +13,7 @@ class AlzheimersClassification3DCNN(nn.Module):
             nn.Conv3d(8, 16, 5),
             nn.ReLU(),
             nn.MaxPool3d(2),
-            nn.Conv3d(16, 32, 3),
+            nn.Conv3d(16, 32, 5),
             nn.ReLU(),
             nn.AdaptiveMaxPool3d((4, 4, 4))
         )
