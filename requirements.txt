@@ -3,3 +3,4 @@ matplotlib==3.7.1
 torchvision==0.15.2
 tqdm==4.65.0
 ipywidgets
+tensorboard==2.13.0

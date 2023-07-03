@@ -112,3 +112,5 @@ datasets/
 __MACOSX/
 
 .Identifier
+
+runs/

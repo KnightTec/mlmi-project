@@ -22,6 +22,10 @@ class MiriadDataset(Dataset):
                 if file.endswith(file_format):
                     self._file_list.append(os.path.join(current_root, file))
 
+        # TODO: fix leakage from training to validation set caused by multiple scans of the same patient
+
+        random.shuffle(self._file_list)
+
         reduced_file_list = []
         ad_count = 0
         hc_count = 0
