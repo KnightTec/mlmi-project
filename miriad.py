@@ -30,10 +30,10 @@ class MiriadDataset(Dataset):
         ad_count = 0
         hc_count = 0
         for file_name in self._file_list:
-            if "AD" in file_name and ad_count < 10:
+            if "AD" in file_name and ad_count < 200:
                 reduced_file_list.append(file_name)
                 ad_count += 1
-            elif "HC" in file_name and hc_count < 10:
+            elif "HC" in file_name and hc_count < 200:
                 reduced_file_list.append(file_name)
                 hc_count += 1
         self._file_list = reduced_file_list

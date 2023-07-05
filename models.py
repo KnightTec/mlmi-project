@@ -135,13 +135,12 @@ class SwinVitPretrainedClassifier(nn.Module):
             downsample=look_up_option(downsample, MERGING_MODE) if isinstance(downsample, str) else downsample
         )
         # freeze the pretrained layers
-        self.swinViT.requires_grad_(False)
+        # self.swinViT.requires_grad_(False)
 
         self._global_avg_pool = nn.AdaptiveAvgPool3d((1, 1, 1))
 
         feature_vector_size = 768
-        self._fc0 = nn.Linear(feature_vector_size, 128)
-        self._fc1 = nn.Linear(128, 1)
+        self._fc0 = nn.Linear(feature_vector_size, 1)
 
     def forward(self, x_in):
         x = self._conv(x_in)
@@ -154,8 +153,7 @@ class SwinVitPretrainedClassifier(nn.Module):
         hidden_states_out = self.swinViT(x, True)[4]
         x = self._global_avg_pool(hidden_states_out)
         x = torch.flatten(x, 1)
-        x = F.relu(self._fc0(x))
-        x = self._fc1(x)
+        x = self._fc0(x)
         x = torch.flatten(x)
         return x
 
