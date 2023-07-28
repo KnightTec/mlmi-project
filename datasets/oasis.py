@@ -78,6 +78,8 @@ class Oasis3MRDataset(Dataset):
     def __getitem__(self, index):
         file_name = self._file_list[index]
 
+        print(file_name)
+
         mri = nib.load(file_name)
         mri_data = mri.get_fdata()
 
