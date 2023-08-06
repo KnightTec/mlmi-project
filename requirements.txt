@@ -5,3 +5,6 @@ tqdm==4.65.0
 ipywidgets
 tensorboard==2.13.0
 pandas==2.0.3
+ftfy
+regex
+tqdm
