@@ -68,7 +68,7 @@ def main():
                 "T1w": [],
                 "T2w": [],
                 "T2star": [],
-                "anigo": [],
+                "angio": [],
                 "FLAIR": [],
             }
         for current_root, dirs, files in os.walk(mr_session_path):
@@ -101,7 +101,7 @@ def main():
         t2w_column.append(paths["T2w"])
         t2_star_column.append(paths["T2star"])
         flair_column.append(paths["FLAIR"])
-        tof_mra_column.append(paths["anigo"])
+        tof_mra_column.append(paths["angio"])
 
     merged_df["MR T1w"] = t1w_column
     merged_df["MR T2w"] = t2w_column
