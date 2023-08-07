@@ -26,8 +26,7 @@ def main():
 
     mr_session_df = pd.read_csv(mr_session_csv)
     mr_session_df = mr_session_df.iloc[:-2]
-    mr_session_df = mr_session_df[["MR ID", "Subject", "Scans"]]
-    mr_session_df["Scans"] = mr_session_df["Scans"].apply(lambda x: str(x))
+    mr_session_df = mr_session_df[["MR ID", "Subject"]]
     mr_session_df["day"] = mr_session_df["MR ID"].apply(lambda x: int(x.split("_")[2][1:]))
     print(mr_session_df)
 
@@ -52,12 +51,13 @@ def main():
     merged_df["year"] = merged_df["day"].apply(lambda x: x / 365.0)
     merged_df["Age"] = merged_df["ageAtEntry"] + merged_df["year"]
 
-    merged_df = merged_df[["MR ID", "Scans", "M/F", "Age", "mmse", "cdr"]]
+    merged_df = merged_df[["MR ID", "M/F", "Age", "mmse", "cdr"]]
     merged_df.rename(columns={'MR ID': 'MR Session ID', "M/F": "Gender"}, inplace=True)
 
     merged_df.reset_index()
 
     # get image file paths
+    # if one modality contains
     mr_file_paths = {} 
     i = 0
     for index, row in merged_df.iterrows():
