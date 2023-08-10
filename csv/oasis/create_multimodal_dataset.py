@@ -110,8 +110,18 @@ def main():
     merged_df["MR TOF-MRA"] = tof_mra_column
 
     print(merged_df)
-    merged_df.to_csv("oasis_3_mulitmodal_full.csv", decimal=".", sep=";", index=False, float_format='%.1f')
+    merged_df.to_csv("oasis_3_multimodal_full.csv", decimal=".", sep=";", index=False, float_format='%.1f')
 
+    merged_df = merged_df.sample(frac=1)
+
+    train_frac = 0.9
+    train_set = merged_df.head(int(len(merged_df) * train_frac))
+    print(train_set)
+    val_set = merged_df.tail(int(len(merged_df) * (1 - train_frac)))
+    print(val_set)
+    
+    train_set.to_csv("oasis_3_multimodal_train.csv", decimal=".", sep=";", index=False, float_format='%.1f')
+    val_set.to_csv("oasis_3_multimodal_val.csv", decimal=".", sep=";", index=False, float_format='%.1f')
 
 if __name__ == "__main__":
     main()
