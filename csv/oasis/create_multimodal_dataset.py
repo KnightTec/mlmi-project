@@ -78,7 +78,7 @@ def main():
                     print(i)
                     for key in session_file_paths.keys():
                         if key in file:
-                            session_file_paths[key].append(file)
+                            session_file_paths[key].append(os.path.join(current_root, file))
         
         for key in session_file_paths.keys():
             file_list = session_file_paths[key]
@@ -86,7 +86,7 @@ def main():
                 session_file_paths[key] = ""
                 continue
             selected_file = sorted(session_file_paths[key])[-1]
-            session_file_paths[key] = os.path.join(current_root, selected_file).replace(mr_sessions_path, "")
+            session_file_paths[key] = selected_file.replace(mr_sessions_path, "")[1:]
         
         mr_file_paths[mr_id] = session_file_paths
 
@@ -108,6 +108,9 @@ def main():
     merged_df["MR T2*"] = t2_star_column
     merged_df["MR FLAIR"] = flair_column
     merged_df["MR TOF-MRA"] = tof_mra_column
+
+    merged_df["cdr"] = merged_df["cdr"].fillna(value=0)
+    merged_df["label"] = merged_df["cdr"].apply(lambda x: 1 if x >= 0.5 else 0)
 
     print(merged_df)
     merged_df.to_csv("oasis_3_multimodal_full.csv", decimal=".", sep=";", index=False, float_format='%.1f')
