@@ -63,14 +63,14 @@ def create_oasis_3_unimodal_dataset(csv_path: str, dataset_root: str, modality: 
     return CacheDataset(data=train_data, transform=transform, cache_rate=cache_rate, num_workers=5, copy_cache=False)
 
 def main():
-    parser = argparse.ArgumentParser(description="PyTorch Training")
+    parser = argparse.ArgumentParser(description="Unimodal Alzheimer's Classsification Training")
     parser.add_argument("--dataset", default="/mnt/f/OASIS-3-MR-Sessions-2D/", type=str, help="directory to the OASIS-3 2D dataset")
     parser.add_argument("--epochs", default=10, type=int, help="number of training epochs")
     parser.add_argument("--batch_size", default=16, type=int, help="batch size")
     parser.add_argument("--modality", type=str, help="MR modality (MR_T1, MR_T2, MR_T2_STAR, MR_FLAIR, MR_TOF_MRA)")
     args = parser.parse_args()
 
-    dataset_root = "/mnt/f/OASIS-3-MR-Sessions-2D/"
+    dataset_root = args.dataset
     max_epochs = args.epochs
     batch_size = args.batch_size
     modality = Modality[args.modality]
