@@ -34,7 +34,7 @@ class Modality(Enum):
     MR_FLAIR = 4
     MR_TOF_MRA = 5
 
-def create_oasis_3_dataset(csv_path: str, dataset_root: str, modality: Modality, transform: Transform, cache_rate: float):
+def create_oasis_3_unimodal_dataset(csv_path: str, dataset_root: str, modality: Modality, transform: Transform, cache_rate: float):
     train_df = pd.read_csv(csv_path, sep=";")
     train_df.fillna('', inplace=True)
 
@@ -93,11 +93,11 @@ def main():
         ]
     )
 
-    train_ds = create_oasis_3_dataset(csv_path=train_table_path, dataset_root=dataset_root, modality=modality, transform=transform, cache_rate=cache_rate)
+    train_ds = create_oasis_3_unimodal_dataset(csv_path=train_table_path, dataset_root=dataset_root, modality=modality, transform=transform, cache_rate=cache_rate)
     train_loader = ThreadDataLoader(train_ds, num_workers=0, batch_size=batch_size, shuffle=True)
 
     val_table_path = "csv/oasis/oasis_3_multimodal_val.csv"
-    val_ds = create_oasis_3_dataset(csv_path=val_table_path, dataset_root=dataset_root, modality=modality, transform=transform, cache_rate=cache_rate)
+    val_ds = create_oasis_3_unimodal_dataset(csv_path=val_table_path, dataset_root=dataset_root, modality=modality, transform=transform, cache_rate=cache_rate)
     val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=batch_size, shuffle=True)
     
     model = DenseNet121(spatial_dims=2, in_channels=1, out_channels=1).to(device)
