@@ -74,6 +74,10 @@ def main():
         for current_root, dirs, files in os.walk(mr_session_path):
             for file in files:
                 if file.endswith(".nii.gz"):
+                    # if "sub-OAS30033_ses-d0133_run-02_T2w.nii.gz" in file:
+                    #     continue
+                    # elif "sub-OAS31065_ses-d0044_echo-1_run-02_FLAIR.nii.gz" in file:
+                    #     continue
                     i += 1
                     print(i)
                     for key in session_file_paths.keys():

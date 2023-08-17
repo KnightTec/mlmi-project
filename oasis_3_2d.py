@@ -24,6 +24,8 @@ def main():
                 data = img1.get_fdata()
                 affine = img1.affine
 
+                print(data.shape)
+
                 data = data[:,:, data.shape[2] // 2]
 
                 new_image = nib.Nifti1Image(data, affine)
