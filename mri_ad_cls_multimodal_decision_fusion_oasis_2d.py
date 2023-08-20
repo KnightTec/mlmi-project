@@ -17,6 +17,7 @@ from monai.transforms import (
     CropForegroundd,
     SpatialPadd,
     Transform,
+    CastToTyped,
 )
 from monai.utils import set_determinism
 from tqdm import tqdm
@@ -71,6 +72,8 @@ def main():
     while(args.exclude_modality in modality_names):
         modality_names.remove(args.exclude_modality)
 
+    print(modality_names)
+
     resolution = 256
     cache_rate = 1.0 # might need to change this based on the amount of memory available
     batch_size = 1
@@ -81,10 +84,9 @@ def main():
 
     transform_list = [
         LoadImaged(keys=modality_names, image_only=True),
-        EnsureChannelFirstd(keys=modality_names, channel_dim="no_channel"),  
+        EnsureChannelFirstd(keys=modality_names + ["label"], channel_dim="no_channel"),
+        CastToTyped("label", dtype=np.float64),
         ScaleIntensityd(keys=modality_names),
-        Resized(keys=modality_names, spatial_size=resolution, size_mode="longest"),
-        SpatialPadd(keys=modality_names, spatial_size=(resolution, resolution))
     ]
     for i in range(len(modality_names)):
         transform_list.append(
@@ -128,21 +130,24 @@ def main():
         y_pred_product = torch.tensor([], dtype=torch.float32, device=device)
         y_pred_max = torch.tensor([], dtype=torch.float32, device=device)
         y = torch.tensor([], dtype=torch.long, device=device)
-        i = 0
         for val_data in tqdm(val_loader):
 
             y_pred_product_sample = 1
             y_pred_max_sample = 0
+            i = 0
             for modality in modality_names:
                 if not val_data["has " + modality]:
                     continue
-                
+                i += 1
                 model = models[modality]
                 val_images = val_data[modality].to(device)
                 pred = y_pred_trans(decollate_batch(model(val_images)))
 
                 y_pred_product_sample *= pred[0]
                 y_pred_max_sample = max(y_pred_max_sample, pred[0])
+
+            if i == 0:
+                continue
 
             val_labels = val_data["label"].to(device)
             y_pred_product = torch.cat([y_pred_product, y_pred_product_sample], dim=0)
