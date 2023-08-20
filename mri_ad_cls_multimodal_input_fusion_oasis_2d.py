@@ -4,7 +4,7 @@ import torch
 import numpy as np
 from sklearn.metrics import classification_report
 
-from monai.data import decollate_batch, DataLoader, CacheDataset, ThreadDataLoader
+from monai.data import decollate_batch, CacheDataset, ThreadDataLoader
 from monai.metrics import ROCAUCMetric
 from monai.networks.nets import DenseNet121
 from monai.transforms import (
@@ -73,8 +73,11 @@ def main():
     parser.add_argument("--exclude_modalities", default="", type=str, help="modalities to use")
     args = parser.parse_args()
 
-    while(args.exclude_modalities in modality_names):
-        modality_names.remove(args.exclude_modality)
+    excluded_modalities = args.exclude_modalities.split(",")
+    for mod in excluded_modalities:
+        mod = mod.strip()
+        while(mod in modality_names):
+            modality_names.remove(mod)
     print(modality_names)
 
     dataset_root = args.dataset
