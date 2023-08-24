@@ -5,7 +5,7 @@ from sklearn.metrics import classification_report
 
 from monai.data import decollate_batch, CacheDataset, ThreadDataLoader
 from monai.metrics import ROCAUCMetric
-from monai.networks.nets import DenseNet121
+from monai.networks.nets import DenseNet121, swin_unetr
 from monai.transforms import (
     Activations,
     EnsureChannelFirstd,
