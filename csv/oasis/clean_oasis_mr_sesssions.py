@@ -1,6 +1,5 @@
 import nibabel as nib
 import os
-import pandas as pd
 import sys
 from tqdm import tqdm
 import csv
@@ -65,11 +64,13 @@ def check_all_nifti_files(directory):
                     missing_metadata_count += 1
     
     all_have_meta = missing_metadata_count == 0
-    if not all_have_meta:
-        session_id = os.path.basename(os.path.normpath(directory))
-        print(f"{missing_metadata_count} out of {all_files_count} scans are missing metadata in {session_id}")
 
     with_meta_count = all_files_count - missing_metadata_count
+
+    if not all_have_meta and all_files_count != missing_metadata_count:
+        # just check that we can drop the full MR session
+        session_id = os.path.basename(os.path.normpath(directory))
+        print(f"{session_id} is only missing metadata partially")
 
     return all_have_meta, with_meta_count, all_files_count
 
@@ -91,8 +92,6 @@ def main():
         if all_have_meta:
             session_count_with_meta += 1
             sessions_with_meta.append(item)
-
-    # TODO: count modalities
 
     print("-----------------------------------------------------------")
     print(f"{total_file_count_with_meta} out of {total_file_count} scans contain full metadata")
