@@ -16,7 +16,6 @@ def visualize_structural_mri_session(session_directory):
 
                 image_data = nii_data.get_fdata()
                 data_shape = image_data.shape
-                print(file)
 
                 half = int(image_data.shape[2] / 3 * 1.5)
                 mri_sample_slice = image_data.astype(np.float32)[:, :, half]
