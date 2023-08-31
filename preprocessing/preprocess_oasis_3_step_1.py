@@ -53,8 +53,6 @@ async def process_mr_session(input_session_path, output_session_path):
 
         await async_save_image(image_saver, transformed["image"][0, :, :, :], transformed["image_meta_dict"])
 
-    # TODO: write session ID to completed list
-
 async def main():
     mr_sessions_path = sys.argv[1]
     mr_session_ids = sys.argv[2]
