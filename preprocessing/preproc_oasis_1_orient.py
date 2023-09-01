@@ -22,10 +22,13 @@ async def async_save_image(saver, image, meta_data):
 
 async def process_mr_session(input_session_path, output_session_path):
     images = []
-    for root, _, files in os.walk(input_session_path):
-        for file in files:
-            if file.lower().endswith(('.nii', '.nii.gz')):
-                images.append(os.path.join(root, file))
+    try:
+        for root, _, files in os.walk(input_session_path):
+            for file in files:
+                if file.lower().endswith(('.nii', '.nii.gz')):
+                    images.append(os.path.join(root, file))
+    except FileNotFoundError as e:
+        return
 
     data = [{"image": img,} for img in images]
 
