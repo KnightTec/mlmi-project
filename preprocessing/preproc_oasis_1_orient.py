@@ -33,14 +33,12 @@ async def process_mr_session(input_session_path, output_session_path):
     data = [{"image": img,} for img in images]
 
     image_saver = SaveImage(output_dir=output_session_path, output_postfix="LPS",
-                             output_ext=".nii.gz", resample=False, print_log=False, separate_folder=False)
+                            output_ext=".nii.gz", resample=False, print_log=False, separate_folder=False)
 
     transform_pipeline = Compose([
         EnsureChannelFirstd(keys),
         Orientationd(keys, axcodes="LPS"),
     ])
-
-    loop = asyncio.get_event_loop()
 
     for item in data:
         loaded_data = await async_load_image(keys, item)
@@ -51,19 +49,22 @@ async def process_mr_session(input_session_path, output_session_path):
         await async_save_image(image_saver, transformed["image"][0, :, :, :], transformed["image_meta_dict"])
 
 def run_mr_sessions_batch(batch_sessions, mr_sessions_path, out_path):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    try: 
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-    async def batch_main():
-        tasks = []
-        for item in batch_sessions:
-            session_path = os.path.join(mr_sessions_path, item)
-            out_session_path = os.path.join(out_path, item)
-            os.makedirs(out_session_path, exist_ok=True)
-            tasks.append(process_mr_session(session_path, out_session_path))
-        await asyncio.gather(*tasks)
+        async def batch_main():
+            tasks = []
+            for item in batch_sessions:
+                session_path = os.path.join(mr_sessions_path, item)
+                out_session_path = os.path.join(out_path, item)
+                os.makedirs(out_session_path, exist_ok=True)
+                tasks.append(process_mr_session(session_path, out_session_path))
+            await asyncio.gather(*tasks)
 
-    loop.run_until_complete(batch_main())
+        loop.run_until_complete(batch_main())
+    except Exception as exc:
+        print(exc)
 
 def chunk_sessions(session_ids, chunk_size):
     for i in range(0, len(session_ids), chunk_size):
@@ -80,9 +81,9 @@ def main():
         for row in csv_content:
             session_ids.append(row[0])
 
-    chunk_size = 64
-
-    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor, tqdm(total=len(session_ids)) as pbar:
+    chunk_size = 16
+    print("Starting preprocessing...")
+    with ProcessPoolExecutor(max_workers=os.cpu_count(), max_tasks_per_child=4) as executor, tqdm(total=len(session_ids)) as pbar:
         futures = {executor.submit(run_mr_sessions_batch, batch, mr_sessions_path, out_path): batch
                    for batch in chunk_sessions(session_ids, chunk_size=chunk_size)}
         
@@ -103,4 +104,5 @@ if __name__ == "__main__":
     et = time.time()
     # get the execution time
     elapsed_time = et - st
+    print()
     print('Execution time:', elapsed_time, 'seconds')
