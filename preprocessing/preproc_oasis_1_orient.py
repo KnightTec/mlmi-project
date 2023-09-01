@@ -8,7 +8,7 @@ import asyncio
 import time
 
 # Global ThreadPoolExecutor
-thread_executor = ThreadPoolExecutor(max_workers=8) 
+thread_executor = ThreadPoolExecutor(max_workers=4) 
 
 keys = ["image"]
 
@@ -77,7 +77,7 @@ def main():
 
     chunk_size = 8
     print("Starting preprocessing...")
-    with ProcessPoolExecutor(max_workers=1) as executor, tqdm(total=len(session_ids)) as pbar:
+    with ProcessPoolExecutor(max_workers=os.cpu_count(), max_tasks_per_child=8) as executor, tqdm(total=len(session_ids)) as pbar:
         futures = {executor.submit(run_mr_sessions_batch, batch, mr_sessions_path, out_path): batch
                    for batch in chunk_sessions(session_ids, chunk_size=chunk_size)}
         print("Submitted tasks to executor.")
