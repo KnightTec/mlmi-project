@@ -3,11 +3,8 @@ import sys
 import csv
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
-import functools
 from monai.transforms import Compose, LoadImaged, Orientationd, SaveImage, EnsureChannelFirstd
 import asyncio
-from tqdm.asyncio import tqdm_asyncio
-import multiprocessing
 import time
 
 # Global ThreadPoolExecutor
@@ -49,22 +46,19 @@ async def process_mr_session(input_session_path, output_session_path):
         await async_save_image(image_saver, transformed["image"][0, :, :, :], transformed["image_meta_dict"])
 
 def run_mr_sessions_batch(batch_sessions, mr_sessions_path, out_path):
-    try: 
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
-        async def batch_main():
-            tasks = []
-            for item in batch_sessions:
-                session_path = os.path.join(mr_sessions_path, item)
-                out_session_path = os.path.join(out_path, item)
-                os.makedirs(out_session_path, exist_ok=True)
-                tasks.append(process_mr_session(session_path, out_session_path))
-            await asyncio.gather(*tasks)
+    async def batch_main():
+        tasks = []
+        for item in batch_sessions:
+            session_path = os.path.join(mr_sessions_path, item)
+            out_session_path = os.path.join(out_path, item)
+            os.makedirs(out_session_path, exist_ok=True)
+            tasks.append(process_mr_session(session_path, out_session_path))
+        await asyncio.gather(*tasks)
 
-        loop.run_until_complete(batch_main())
-    except Exception as exc:
-        print(exc)
+    loop.run_until_complete(batch_main())
 
 def chunk_sessions(session_ids, chunk_size):
     for i in range(0, len(session_ids), chunk_size):
@@ -81,12 +75,12 @@ def main():
         for row in csv_content:
             session_ids.append(row[0])
 
-    chunk_size = 16
+    chunk_size = 8
     print("Starting preprocessing...")
-    with ProcessPoolExecutor(max_workers=os.cpu_count(), max_tasks_per_child=4) as executor, tqdm(total=len(session_ids)) as pbar:
+    with ProcessPoolExecutor(max_workers=1) as executor, tqdm(total=len(session_ids)) as pbar:
         futures = {executor.submit(run_mr_sessions_batch, batch, mr_sessions_path, out_path): batch
                    for batch in chunk_sessions(session_ids, chunk_size=chunk_size)}
-        
+        print("Submitted tasks to executor.")
         for future in as_completed(futures):
             batch = futures[future]
             try:
