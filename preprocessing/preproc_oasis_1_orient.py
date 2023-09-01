@@ -21,6 +21,7 @@ async def async_save_image(saver, image, meta_data):
     await loop.run_in_executor(thread_executor, saver, image, meta_data)
 
 async def process_mr_session(input_session_path, output_session_path):
+    os.makedirs(output_session_path, exist_ok=True)
     images = []
     try:
         for root, _, files in os.walk(input_session_path):
@@ -57,7 +58,6 @@ def run_mr_sessions_batch(batch_sessions, mr_sessions_path, out_path):
         for item in batch_sessions:
             session_path = os.path.join(mr_sessions_path, item)
             out_session_path = os.path.join(out_path, item)
-            os.makedirs(out_session_path, exist_ok=True)
             tasks.append(process_mr_session(session_path, out_session_path))
         await asyncio.gather(*tasks)
 
