@@ -5,6 +5,7 @@ import csv
 
 from monai.transforms import Compose, LoadImaged, Orientationd, SaveImage, EnsureChannelFirstd
 
+import time
 
 def process_mr_session(input_session_path, output_session_path):
     # Define keys for dictionary
@@ -59,4 +60,14 @@ def main():
         process_mr_session(input_session_path=session_path, output_session_path=out_session_path)
 
 if __name__ == "__main__":
+    # get the start time
+    st = time.time()
+
     main()
+
+    # get the end time
+    et = time.time()
+
+    # get the execution time
+    elapsed_time = et - st
+    print(f'Execution time:  {elapsed_time} seconds')
