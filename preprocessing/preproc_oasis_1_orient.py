@@ -46,22 +46,19 @@ async def process_mr_session(input_session_path, output_session_path):
         await async_save_image(image_saver, transformed["image"][0, :, :, :], transformed["image_meta_dict"])
 
 def run_mr_sessions_batch(batch_sessions, mr_sessions_path, out_path):
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
-        async def batch_main():
-            tasks = []
-            for item in batch_sessions:
-                session_path = os.path.join(mr_sessions_path, item)
-                out_session_path = os.path.join(out_path, item)
-                os.makedirs(out_session_path, exist_ok=True)
-                tasks.append(process_mr_session(session_path, out_session_path))
-            await asyncio.gather(*tasks)
+    async def batch_main():
+        tasks = []
+        for item in batch_sessions:
+            session_path = os.path.join(mr_sessions_path, item)
+            out_session_path = os.path.join(out_path, item)
+            os.makedirs(out_session_path, exist_ok=True)
+            tasks.append(process_mr_session(session_path, out_session_path))
+        await asyncio.gather(*tasks)
 
-        loop.run_until_complete(batch_main())
-    except Exception as exc:
-        print(exc)
+    loop.run_until_complete(batch_main())
 
 def chunk_sessions(session_ids, chunk_size):
     for i in range(0, len(session_ids), chunk_size):
