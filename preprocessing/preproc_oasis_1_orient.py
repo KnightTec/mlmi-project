@@ -80,9 +80,11 @@ def main():
         for row in csv_content:
             session_ids.append(row[0])
 
-    with ProcessPoolExecutor(max_workers=1) as executor, tqdm(total=len(session_ids)) as pbar:
+    chunk_size = 64
+
+    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor, tqdm(total=len(session_ids)) as pbar:
         futures = {executor.submit(run_mr_sessions_batch, batch, mr_sessions_path, out_path): batch
-                   for batch in chunk_sessions(session_ids, chunk_size=8)}
+                   for batch in chunk_sessions(session_ids, chunk_size=chunk_size)}
         
         for future in as_completed(futures):
             batch = futures[future]
