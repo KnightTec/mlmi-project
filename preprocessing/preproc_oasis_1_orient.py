@@ -43,10 +43,12 @@ async def process_mr_session(input_session_path, output_session_path):
 
     for item in data:
         loaded_data = await async_load_image(keys, item)
+
         transformed = transform_pipeline(loaded_data)
         if len(transformed["image"].shape) != 4:
             print(f'Skipping scan {transformed["image_meta_dict"]["filename_or_obj"]} because it does not have 3 dimensions')
             continue
+
         await async_save_image(image_saver, transformed["image"][0, :, :, :], transformed["image_meta_dict"])
 
 def run_mr_sessions_batch(batch_sessions, mr_sessions_path, out_path):
@@ -80,7 +82,7 @@ def main():
 
     chunk_size = 8
     print("Starting preprocessing...")
-    with ProcessPoolExecutor(max_workers=os.cpu_count(), max_tasks_per_child=8) as executor, tqdm(total=len(session_ids)) as pbar:
+    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor, tqdm(total=len(session_ids)) as pbar:
         futures = {executor.submit(run_mr_sessions_batch, batch, mr_sessions_path, out_path): batch
                    for batch in chunk_sessions(session_ids, chunk_size=chunk_size)}
         print("Submitted tasks to executor.")
