@@ -1,1 +1,0 @@
-# TODO: perform rigid registration with dipy to sri-24 template

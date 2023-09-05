@@ -3,7 +3,7 @@ import nibabel as nib
 import matplotlib.pyplot as plt
 import numpy as np
 
-def visualize_structural_mri_session(session_directory):
+def visualize_structural_mri_session(session_directory, axis=2):
     file_format = ".nii.gz"
 
     file_paths = []
@@ -22,9 +22,19 @@ def visualize_structural_mri_session(session_directory):
 
         image_data = nii_data.get_fdata()
         data_shape = image_data.shape
-
-        half = int(image_data.shape[2] / 3 * 1.5)
-        mri_sample_slice = image_data.astype(np.float32)[:, :, half]
+        
+        if axis == 0:
+            half = int(image_data.shape[0] / 2)
+            mri_sample_slice = image_data.astype(np.float32)[half, :, :]
+        elif axis == 1:
+            half = int(image_data.shape[1] / 2)
+            mri_sample_slice = image_data.astype(np.float32)[:, half, :]
+        elif axis == 2:
+            half = int(image_data.shape[2] / 2)
+            mri_sample_slice = image_data.astype(np.float32)[:, :, half]
+        else:
+            raise ValueError("Invalid axis value!")
+        
         imgs.append(mri_sample_slice)
 
         modality = ""
@@ -42,6 +52,39 @@ def visualize_structural_mri_session(session_directory):
             modality = "TOF MRA"
         
         modalities.append(modality)
+        shapes.append(data_shape)
+
+    fig, ax = plt.subplots(nrows=1, ncols=len(modalities), figsize=(15, 15))
+    for i, img in enumerate(imgs):
+        ax[i].imshow(img.T, cmap='gray')
+        ax[i].axis('off')
+        ax[i].set_title(f"{modalities[i]} {shapes[i]}")  # Set title for each modality image
+
+    plt.tight_layout()            
+    plt.show()
+
+def visualize_structural_mri_session_data(mri_scans: list, modality_names: list[str], axis=2):
+    modalities = modality_names
+    shapes = []
+    imgs = []
+
+    for scan in mri_scans:
+        image_data = scan
+        data_shape = image_data.shape
+
+        if axis == 0:
+            half = int(image_data.shape[0] / 2)
+            mri_sample_slice = image_data.astype(np.float32)[half, :, :]
+        elif axis == 1:
+            half = int(image_data.shape[1] / 2)
+            mri_sample_slice = image_data.astype(np.float32)[:, half, :]
+        elif axis == 2:
+            half = int(image_data.shape[2] / 2)
+            mri_sample_slice = image_data.astype(np.float32)[:, :, half]
+        else:
+            raise ValueError("Invalid axis value!")
+
+        imgs.append(mri_sample_slice)
         shapes.append(data_shape)
 
     fig, ax = plt.subplots(nrows=1, ncols=len(modalities), figsize=(15, 15))
