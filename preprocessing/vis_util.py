@@ -2,6 +2,64 @@ import os
 import nibabel as nib
 import matplotlib.pyplot as plt
 import numpy as np
+import random
+
+def select_fixed_random_indices(input_list, num_indices=32, seed=42):
+    random.seed(seed)  # Set the random seed for reproducibility
+    if num_indices > len(input_list):
+        raise ValueError("Number of indices to select exceeds the length of the input list.")
+    
+    # Use random.sample() to select random indices without duplicates
+    random_indices = random.sample(range(len(input_list)), num_indices)
+    
+    return random_indices
+
+def visualize_random_miriad(miriad_dir, axis=2, slice_fraction=0.5):
+    file_formats = (".nii.gz", ".nii")
+
+    file_paths = []
+    for current_root, dirs, files in os.walk(miriad_dir):
+        for file in files:
+            if file.endswith(file_formats):
+                file_paths.append((os.path.join(current_root, file), file))
+
+    file_paths.sort(key=lambda tup: tup[1])
+    file_paths = file_paths[:32]
+
+    #file_paths = select_fixed_random_indices(file_paths)
+
+    imgs = []
+    for file_path, file in file_paths:
+        nii_data = nib.load(file_path)
+
+        image_data = nii_data.get_fdata()
+        data_shape = image_data.shape
+        
+        if axis == 0:
+            half = int(image_data.shape[0] * slice_fraction)
+            mri_sample_slice = image_data.astype(np.float32)[half, :, :]
+        elif axis == 1:
+            half = int(image_data.shape[1] * slice_fraction)
+            mri_sample_slice = image_data.astype(np.float32)[:, half, :]
+        elif axis == 2:
+            half = int(image_data.shape[2] * slice_fraction)
+            mri_sample_slice = image_data.astype(np.float32)[:, :, half]
+        else:
+            raise ValueError("Invalid axis value!") 
+        
+        imgs.append(mri_sample_slice)
+
+    fig, ax = plt.subplots(nrows=4, ncols=8, figsize=(80, 160))
+    for x in range(4):
+        for y in range(8):
+            img = imgs[x*4+y]
+            ax[x][y].imshow(img.T, cmap='gray')
+            ax[x][y].axis('off')
+
+    plt.tight_layout()            
+    plt.show()
+
+
 
 def visualize_structural_mri_session(session_directory, axis=2, slice_fraction=0.5, val_percentile=None, limit=None):
     file_formats = (".nii.gz", ".nii")
@@ -17,7 +75,6 @@ def visualize_structural_mri_session(session_directory, axis=2, slice_fraction=0
     if not limit:
         limit = 100
     
-
     modalities = []
     shapes = []
     imgs = []
@@ -72,8 +129,7 @@ def visualize_structural_mri_session(session_directory, axis=2, slice_fraction=0
         
         imgs.append(mri_sample_slice)
 
-        
-        
+
         modalities.append(modality)
         shapes.append(data_shape)
 

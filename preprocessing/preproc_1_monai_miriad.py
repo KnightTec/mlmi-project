@@ -15,10 +15,8 @@ from monai.transforms import (
     ScaleIntensityd,
     Lambdad,
 )
-import asyncio
 import time
    
-
 def process_subject(input_subject_path, output_subject_path):
     images = []
     try:
@@ -46,7 +44,7 @@ def process_subject(input_subject_path, output_subject_path):
         return data
     
     os.makedirs(output_subject_path, exist_ok=True)
-    print(data)
+
     transform_pipeline = Compose([
         LoadImaged(keys, image_only=False),
         #Lambdad(keys=[f"{key}_meta_dict" for key in all_keys], func=check_affine),
