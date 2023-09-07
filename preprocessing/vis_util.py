@@ -3,7 +3,7 @@ import nibabel as nib
 import matplotlib.pyplot as plt
 import numpy as np
 
-def visualize_structural_mri_session(session_directory, axis=2, slice_fraction=0.5, val_percentile=None):
+def visualize_structural_mri_session(session_directory, axis=2, slice_fraction=0.5, val_percentile=None, limit=None):
     file_formats = (".nii.gz", ".nii")
 
     file_paths = []
@@ -14,12 +14,20 @@ def visualize_structural_mri_session(session_directory, axis=2, slice_fraction=0
 
     file_paths.sort(key=lambda tup: tup[1])
 
+    if not limit:
+        limit = 100
+    
+
     modalities = []
     shapes = []
     imgs = []
+    counter = 0
     for file_path, file in file_paths:
+        counter += 1
+        if counter > limit:
+            break
 
-        modality = ""
+        modality = "T1"
         if "t1ce" in file:
             modality = "T1CE"
         elif "T1w" in file or "t1" in file or "T1" in file:
