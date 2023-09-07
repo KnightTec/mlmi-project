@@ -74,9 +74,9 @@ async def process_mr_session(input_session_path, output_session_path):
         EnsureChannelFirstd(all_keys),
         Orientationd(all_keys, axcodes="LPS"),
         ScaleIntensityd(all_keys),
-        ResampleToMatchd(keys=all_keys, key_dst="T1w", padding_mode="zeros"), # resample to T1-weighted
+        ResampleToMatchd(keys=non_ref_keys, key_dst="T1w", padding_mode="zeros"), # resample to T1-weighted
         Spacingd(keys=all_keys, pixdim=(1.0, 1.0, 1.0)), # isotropic resampling
-        CropForegroundd(keys=all_keys, source_key="T1w", select_fn=lambda x: x > 0.5, margin=10)
+        CropForegroundd(keys=all_keys, source_key="T1w", select_fn=lambda x: x > 0.1, margin=10)
     ])
     try:
         transformed_images = transform_pipeline(loaded_images)

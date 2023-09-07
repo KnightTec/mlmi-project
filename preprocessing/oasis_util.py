@@ -3,7 +3,7 @@ import nibabel as nib
 import matplotlib.pyplot as plt
 import numpy as np
 
-def visualize_structural_mri_session(session_directory, axis=2):
+def visualize_structural_mri_session(session_directory, axis=2, slice_fraction=0.5):
     file_format = ".nii.gz"
 
     file_paths = []
@@ -24,13 +24,13 @@ def visualize_structural_mri_session(session_directory, axis=2):
         data_shape = image_data.shape
         
         if axis == 0:
-            half = int(image_data.shape[0] / 2)
+            half = int(image_data.shape[0] * slice_fraction)
             mri_sample_slice = image_data.astype(np.float32)[half, :, :]
         elif axis == 1:
-            half = int(image_data.shape[1] / 2)
+            half = int(image_data.shape[1] * slice_fraction)
             mri_sample_slice = image_data.astype(np.float32)[:, half, :]
         elif axis == 2:
-            half = int(image_data.shape[2] / 2)
+            half = int(image_data.shape[2] * slice_fraction)
             mri_sample_slice = image_data.astype(np.float32)[:, :, half]
         else:
             raise ValueError("Invalid axis value!")
@@ -54,11 +54,13 @@ def visualize_structural_mri_session(session_directory, axis=2):
         modalities.append(modality)
         shapes.append(data_shape)
 
-    fig, ax = plt.subplots(nrows=1, ncols=len(modalities), figsize=(15, 15))
+    constant_height = 5  # constant height for each subplot
+    custom_fontsize = 10
+    fig, ax = plt.subplots(nrows=1, ncols=len(modalities), figsize=(2 * len(modalities), constant_height))
     for i, img in enumerate(imgs):
         ax[i].imshow(img.T, cmap='gray')
         ax[i].axis('off')
-        ax[i].set_title(f"{modalities[i]} {shapes[i]}")  # Set title for each modality image
+        ax[i].set_title(f"{modalities[i]} {shapes[i]}",fontsize=custom_fontsize)  # Set title for each modality image
 
     plt.tight_layout()            
     plt.show()
