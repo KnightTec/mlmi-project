@@ -28,15 +28,13 @@ def main():
             
             # Run synthstrip
             in_file = os.path.join(in_dir_path, file)
-            out_file = os.path.join(os.path.join(out_dataset_path, dir), file)
+            out_dir = os.path.join(out_dataset_path, dir)
+            os.makedirs(out_dir, exist_ok=True)
+            out_file = os.path.join(out_dir, file)
             arguments = ['-i', in_file, '-o', out_file, "-g"] 
-
+            print(arguments)
             try:
-                result = subprocess.run(['python', script_path] + arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
-                # Access the output and error messages if needed
-                output = result.stdout
-                error = result.stderr
-                print(f"Output: {output}")
+                subprocess.run(['python', script_path] + arguments, text=True, check=True)
             except subprocess.CalledProcessError as e:
                 print(f"Error: {e}")
 
