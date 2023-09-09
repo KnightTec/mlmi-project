@@ -135,6 +135,7 @@ def visualize_structural_mri_session(session_directory, axis=2, slice_fraction=0
 
     constant_height = 5  # constant height for each subplot
     custom_fontsize = 10
+    print(modalities)
     fig, ax = plt.subplots(nrows=1, ncols=len(modalities), figsize=(2 * len(modalities), constant_height))
     for i, img in enumerate(imgs):
         ax[i].imshow(img.T, cmap='gray')
