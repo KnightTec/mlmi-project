@@ -2,10 +2,18 @@ import subprocess
 import os
 import sys
 from tqdm import tqdm
+import argparse
+import csv
 
 def main():
-    in_dataset_path = sys.argv[1]
-    out_dataset_path = sys.argv[2]
+    parser = argparse.ArgumentParser(description="Dataset skull stripping via SynthStrip")
+    parser.add_argument("-i", "--input", type=str, help="input dataset")
+    parser.add_argument("-o", "--output", type=str, help="output dataset")
+    parser.add_argument("--csv", default="", type=str, help="subdirectories to strip")
+    args = parser.parse_args()
+
+    in_dataset_path = args.input
+    out_dataset_path = args.output
 
     # Replace 'script.py' with the path to the script you want to call
     freesurfer_home = os.getenv("FREESURFER_HOME")
@@ -14,11 +22,16 @@ def main():
     os.makedirs(out_dataset_path, exist_ok=True)
 
     subdirs = []
-    for dir in os.listdir(in_dataset_path):
-        if os.path.isdir(os.path.join(in_dataset_path, dir)):
-            subdirs.append(dir)
-
-    subdirs = sorted(subdirs)
+    if args.csv:
+        with open(args.csv, newline='') as csvfile:
+            csv_content = csv.reader(csvfile, delimiter=' ', quotechar='|')
+            for row in csv_content:
+                subdirs.append(row[0])
+    else:
+        for dir in os.listdir(in_dataset_path):
+            if os.path.isdir(os.path.join(in_dataset_path, dir)):
+                subdirs.append(dir)
+        subdirs = sorted(subdirs)
 
     for dir in tqdm(subdirs):
         in_dir_path = os.path.join(in_dataset_path, dir)
