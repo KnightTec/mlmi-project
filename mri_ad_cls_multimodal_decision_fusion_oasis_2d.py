@@ -26,9 +26,7 @@ import os
 from monai.transforms import Transform
 import argparse
 
-modality_names = ["MR T1w", "MR T2w", "MR T2*", "MR FLAIR", "MR TOF-MRA"]
-
-def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transform: Transform, cache_rate: float):
+def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transform: Transform, cache_rate: float, modality_names: list):
     train_df = pd.read_csv(csv_path, sep=";")
     train_df.fillna('', inplace=True)
 
@@ -62,23 +60,13 @@ class SafeCropForegroundd:
             return data  # Revert to original data if cropped size is zero in any dimension
     
         return cropped_data
+    
 
-def main():
-    parser = argparse.ArgumentParser(description="Unimodal Alzheimer's Classsification Training")
-    parser.add_argument("--dataset", default="/mnt/f/OASIS-3-MR-Sessions-2D/", type=str, help="directory to the OASIS-3 2D dataset")
-    parser.add_argument("--exclude_modality", default="", type=str, help="modality to exclude")
-    args = parser.parse_args()
-
-    while(args.exclude_modality in modality_names):
-        modality_names.remove(args.exclude_modality)
-
-    print(modality_names)
-
+def run_decision_level_fusion_modal(modality_names: list, dataset_root: str):
     resolution = 256
     cache_rate = 1.0 # might need to change this based on the amount of memory available
     batch_size = 1
 
-    dataset_root = args.dataset
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     foreground_crop_threshold = 0.1
 
@@ -101,7 +89,7 @@ def main():
     transform = Compose(transform_list)
 
     val_table_path = "csv/oasis/oasis_3_multimodal_val.csv"
-    val_ds = create_oasis_3_multimodal_dataset(csv_path=val_table_path, dataset_root=dataset_root, transform=transform, cache_rate=cache_rate)
+    val_ds = create_oasis_3_multimodal_dataset(csv_path=val_table_path, dataset_root=dataset_root, transform=transform, cache_rate=cache_rate, modality_names=modality_names)
     val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=batch_size, shuffle=True)
 
     model_paths = {
@@ -162,9 +150,33 @@ def main():
 
         auc_metric_max(y_pred_max.cpu(), y_onehot)
         result_max = auc_metric_max.aggregate()
-
+        print("-----------------------------------")
+        print(modality_names)
         print(f"Product Fusion AUC = {result_prod}")
         print(f"Max Fusion AUC = {result_max}")
+
+from itertools import combinations
+
+def main():
+    parser = argparse.ArgumentParser(description="Unimodal Alzheimer's Classsification Training")
+    parser.add_argument("--dataset", default="/mnt/f/OASIS-3-MR-Sessions-2D/", type=str, help="directory to the OASIS-3 2D dataset")
+    parser.add_argument("--exclude_modality", default="", type=str, help="modality to exclude")
+    parser.add_argument('--ablation', action='store_true', help="Run with all modality combinations")
+    args = parser.parse_args()
+
+    all_modalities =["MR T1w", "MR T2w", "MR T2*", "MR FLAIR", "MR TOF-MRA"]
+
+    if args.ablation:
+        for i in range(2, len(all_modalities)):
+            combos = list(combinations(all_modalities, i))
+            for combination in combos:
+                run_decision_level_fusion_modal(modality_names=list(combination), dataset_root=args.dataset)
+    else:
+        while(args.exclude_modality in all_modalities):
+                all_modalities.remove(args.exclude_modality)
+        run_decision_level_fusion_modal(modality_names=all_modalities, dataset_root=args.dataset)
+    
+    print("finished experiment")
 
 if __name__ == "__main__":
     main()
