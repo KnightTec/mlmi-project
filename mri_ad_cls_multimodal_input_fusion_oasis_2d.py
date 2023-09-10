@@ -29,7 +29,7 @@ import argparse
 from itertools import combinations
 import csv
 
-def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transform: Transform, cache_rate: float, modality_names: list):
+def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transform: Transform, cache_rate: float, modality_names: list, missing_modality: str):
     train_df = pd.read_csv(csv_path, sep=";")
     train_df.fillna('', inplace=True)
 
@@ -43,7 +43,12 @@ def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transfor
                 has_non_empty = True
                 data_dict[modality] = os.path.join(dataset_root, file_path)
             else:
-                data_dict[modality] = "empty_volume_2d.nii.gz"
+                if missing_modality == "zeros":
+                    data_dict[modality] = "empty_volume_2d.nii.gz"
+                elif missing_modality == "gauss":
+                    data_dict[modality] = "gauss_2d_256.nii.gz"
+                else:
+                    raise ValueError(f"Invalid missing modality key {missing_modality}")
         if not has_non_empty:
             continue
         data_dict["label"] = row["label"]
@@ -65,9 +70,7 @@ class SafeCropForegroundd:
         
         return cropped_data
     
-output_table_filename = "input_level_fusion_ablation.csv"
-    
-def run_input_fusion_training(modality_names: list, dataset_root: str, epochs: int, batch_size: int):
+def run_input_fusion_training(modality_names: list, dataset_root: str, epochs: int, batch_size: int, missing_modality: str, output_table_filename: str):
     max_epochs = epochs
 
     resolution = 256
@@ -96,12 +99,12 @@ def run_input_fusion_training(modality_names: list, dataset_root: str, epochs: i
 
     train_table_path = "csv/oasis/oasis_3_multimodal_train.csv"
     train_ds = create_oasis_3_multimodal_dataset(csv_path=train_table_path, dataset_root=dataset_root, transform=transform, 
-                                                 cache_rate=cache_rate, modality_names=modality_names)
+                                                 cache_rate=cache_rate, modality_names=modality_names, missing_modality=missing_modality)
     train_loader = ThreadDataLoader(train_ds, num_workers=0, batch_size=batch_size, shuffle=True)
 
     val_table_path = "csv/oasis/oasis_3_multimodal_val.csv"
     val_ds = create_oasis_3_multimodal_dataset(csv_path=val_table_path, dataset_root=dataset_root, transform=transform, 
-                                               cache_rate=cache_rate, modality_names=modality_names)
+                                               cache_rate=cache_rate, modality_names=modality_names, missing_modality=missing_modality)
     val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=batch_size, shuffle=True)
 
     model = DenseNet121(spatial_dims=2, in_channels=len(modality_names), out_channels=1).to(device)
@@ -122,7 +125,7 @@ def run_input_fusion_training(modality_names: list, dataset_root: str, epochs: i
 
     short_mod_names = [modality_name_map[mod] for mod in modality_names]
 
-    model_file_name = f"DenseNet121_ad_cls_oasis_3_input_fusion{'_'.join(short_mod_names)}.pth"
+    model_file_name = f"DenseNet121_ad_cls_oasis_3_input_fusion{'_'.join(short_mod_names)}_{missing_modality}.pth"
 
     best_metric = -1
     best_metric_epoch = -1
@@ -196,27 +199,32 @@ def main():
     parser.add_argument("--batch_size", default=16, type=int, help="batch size")
     parser.add_argument("--exclude_modalities", default="", type=str, help="modalities to use")
     parser.add_argument('--ablation', action='store_true', help="Run with all modality combinations")
+    parser.add_argument("--missing_modality", type=str, help="Values to use for missing modality in a sample (zeros or gauss)")
     args = parser.parse_args()
 
     all_modalities = ["MR T1w", "MR T2w", "MR T2*", "MR FLAIR", "MR TOF-MRA"]
+
+    output_table_filename = f"input_level_fusion_{args.missing_modality}_ablation.csv"
 
     with open(output_table_filename, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['Modalities', 'Best AUC', 'BestEpoch'])
 
     if args.ablation:
-        for i in range(4, len(all_modalities)):
+        for i in range(2, len(all_modalities)):
             combos = list(combinations(all_modalities, i))
             for combination in combos:
-                print(f"Running input level fusion training with {combination}...")
-                run_input_fusion_training(modality_names=list(combination), dataset_root=args.dataset, epochs=args.epochs, batch_size=args.batch_size)
+                print(f"Running input level fusion training with modality {combination} and {args.missing_modality}...")
+                run_input_fusion_training(modality_names=list(combination), dataset_root=args.dataset, epochs=args.epochs,
+                                           batch_size=args.batch_size, missing_modality=args.missing_modality, output_table_filename=output_table_filename)
     else:
         excluded_modalities = args.exclude_modalities.split(",")
         for mod in excluded_modalities:
             mod = mod.strip()
             while(mod in all_modalities):
                 all_modalities.remove(mod)
-        run_input_fusion_training(modality_names=all_modalities, dataset_root=args.dataset, epochs=args.epochs, batch_size=args.batch_size)
+        run_input_fusion_training(modality_names=all_modalities, dataset_root=args.dataset, epochs=args.epochs,
+                                   batch_size=args.batch_size, missing_modality=args.missing_modality, output_table_filename=output_table_filename)
 
 if __name__ == "__main__":
     main()
