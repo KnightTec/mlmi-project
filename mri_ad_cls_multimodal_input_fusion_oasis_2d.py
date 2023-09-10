@@ -26,10 +26,10 @@ from tqdm import tqdm
 import pandas as pd
 import os 
 import argparse
+from itertools import combinations
+import csv
 
-modality_names = ["MR T1w", "MR T2w", "MR T2*", "MR FLAIR", "MR TOF-MRA"]
-
-def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transform: Transform, cache_rate: float):
+def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transform: Transform, cache_rate: float, modality_names: list):
     train_df = pd.read_csv(csv_path, sep=";")
     train_df.fillna('', inplace=True)
 
@@ -65,24 +65,10 @@ class SafeCropForegroundd:
         
         return cropped_data
     
-def main():
-    parser = argparse.ArgumentParser(description="Multimoda Alzheimer's Classsification Training")
-    parser.add_argument("--dataset", default="/mnt/f/OASIS-3-MR-Sessions-2D/", type=str, help="directory to the OASIS-3 2D dataset")
-    parser.add_argument("--epochs", default=20, type=int, help="number of training epochs")
-    parser.add_argument("--batch_size", default=16, type=int, help="batch size")
-    parser.add_argument("--exclude_modalities", default="", type=str, help="modalities to use")
-    args = parser.parse_args()
-
-    excluded_modalities = args.exclude_modalities.split(",")
-    for mod in excluded_modalities:
-        mod = mod.strip()
-        while(mod in modality_names):
-            modality_names.remove(mod)
-    print(modality_names)
-
-    dataset_root = args.dataset
-    max_epochs = args.epochs
-    batch_size = args.batch_size
+output_table_filename = "input_level_fusion_ablation.csv"
+    
+def run_input_fusion_training(modality_names: list, dataset_root: str, epochs: int, batch_size: int):
+    max_epochs = epochs
 
     resolution = 256
     cache_rate = 1.0
@@ -109,11 +95,13 @@ def main():
     transform = Compose(transform_list)
 
     train_table_path = "csv/oasis/oasis_3_multimodal_train.csv"
-    train_ds = create_oasis_3_multimodal_dataset(csv_path=train_table_path, dataset_root=dataset_root, transform=transform, cache_rate=cache_rate)
+    train_ds = create_oasis_3_multimodal_dataset(csv_path=train_table_path, dataset_root=dataset_root, transform=transform, 
+                                                 cache_rate=cache_rate, modality_names=modality_names)
     train_loader = ThreadDataLoader(train_ds, num_workers=0, batch_size=batch_size, shuffle=True)
 
     val_table_path = "csv/oasis/oasis_3_multimodal_val.csv"
-    val_ds = create_oasis_3_multimodal_dataset(csv_path=val_table_path, dataset_root=dataset_root, transform=transform, cache_rate=cache_rate)
+    val_ds = create_oasis_3_multimodal_dataset(csv_path=val_table_path, dataset_root=dataset_root, transform=transform, 
+                                               cache_rate=cache_rate, modality_names=modality_names)
     val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=batch_size, shuffle=True)
 
     model = DenseNet121(spatial_dims=2, in_channels=len(modality_names), out_channels=1).to(device)
@@ -123,7 +111,18 @@ def main():
     val_interval = 1
     auc_metric = ROCAUCMetric()
     out_model_dir = "./pretrained/"
-    model_file_name = f"DenseNet121_ad_cls_oasis_3.pth"
+
+    modality_name_map = {
+        "MR T1w": "T1",
+        "MR T2w": "T2",
+        "MR T2*": "T2star",
+        "MR FLAIR": "FLAIR",
+        "MR TOF-MRA": "MRA"
+    }
+
+    short_mod_names = [modality_name_map[mod] for mod in modality_names]
+
+    model_file_name = f"DenseNet121_ad_cls_oasis_3_input_fusion{'_'.join(short_mod_names)}.pth"
 
     best_metric = -1
     best_metric_epoch = -1
@@ -182,8 +181,42 @@ def main():
                     f" best AUC: {best_metric:.4f}"
                     f" at epoch: {best_metric_epoch}"
                 )
+    print("------------------------------------")
+    print(f"Training completed for modalites {','.join(short_mod_names)}")
+    print(f"Best AUC = {best_metric:.5f} " f"at epoch {best_metric_epoch}")
 
-    print(f"Training completed - best AUC = {best_metric:.4f} " f"at epoch {best_metric_epoch}")   
+    with open(output_table_filename, 'a', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([','.join(short_mod_names), best_metric, best_metric_epoch])
+    
+def main():
+    parser = argparse.ArgumentParser(description="Multimoda Alzheimer's Classsification Training")
+    parser.add_argument("--dataset", default="/mnt/f/OASIS-3-MR-Sessions-2D/", type=str, help="directory to the OASIS-3 2D dataset")
+    parser.add_argument("--epochs", default=20, type=int, help="number of training epochs")
+    parser.add_argument("--batch_size", default=16, type=int, help="batch size")
+    parser.add_argument("--exclude_modalities", default="", type=str, help="modalities to use")
+    parser.add_argument('--ablation', action='store_true', help="Run with all modality combinations")
+    args = parser.parse_args()
+
+    all_modalities = ["MR T1w", "MR T2w", "MR T2*", "MR FLAIR", "MR TOF-MRA"]
+
+    with open(output_table_filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Modalities', 'Best AUC', 'BestEpoch'])
+
+    if args.ablation:
+        for i in range(4, len(all_modalities)):
+            combos = list(combinations(all_modalities, i))
+            for combination in combos:
+                print(f"Running input level fusion training with {combination}...")
+                run_input_fusion_training(modality_names=list(combination), dataset_root=args.dataset, epochs=args.epochs, batch_size=args.batch_size)
+    else:
+        excluded_modalities = args.exclude_modalities.split(",")
+        for mod in excluded_modalities:
+            mod = mod.strip()
+            while(mod in all_modalities):
+                all_modalities.remove(mod)
+        run_input_fusion_training(modality_names=all_modalities, dataset_root=args.dataset, epochs=args.epochs, batch_size=args.batch_size)
 
 if __name__ == "__main__":
     main()
