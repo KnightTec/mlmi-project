@@ -35,6 +35,9 @@ def main():
 
     for dir in tqdm(subdirs):
         in_dir_path = os.path.join(in_dataset_path, dir)
+        if not os.path.exists(in_dir_path):
+            print(f"Skipping {in_dir_path} because it does not exists...")
+            continue
         for file in os.listdir(in_dir_path):
             if not file.lower().endswith(('.nii', '.nii.gz')):
                 continue
