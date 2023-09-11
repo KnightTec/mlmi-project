@@ -43,7 +43,7 @@ def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transfor
                 has_non_empty = True
                 data_dict[modality] = os.path.join(dataset_root, file_path)
             else:
-                if missing_modality == "zeros":
+                if missing_modality == "zeros" or "mask":
                     data_dict[modality] = "empty_volume_2d.nii.gz"
                 elif missing_modality == "gauss":
                     data_dict[modality] = "gauss_2d_256.nii.gz"
@@ -199,7 +199,7 @@ def main():
     parser.add_argument("--batch_size", default=16, type=int, help="batch size")
     parser.add_argument("--exclude_modalities", default="", type=str, help="modalities to use")
     parser.add_argument('--ablation', action='store_true', help="Run with all modality combinations")
-    parser.add_argument("--missing_modality", type=str, help="Values to use for missing modality in a sample (zeros or gauss)")
+    parser.add_argument("--missing_modality", type=str, help="Values to use for missing modality in a sample (zeros, gauss or mask)")
     args = parser.parse_args()
 
     all_modalities = ["MR T1w", "MR T2w", "MR T2*", "MR FLAIR", "MR TOF-MRA"]
