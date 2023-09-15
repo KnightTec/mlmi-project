@@ -35,7 +35,7 @@ def process_subject(input_subject_path, output_subject_path):
         ScaleIntensityd(keys),
         CropForegroundd(keys=keys, source_key=keys[0], select_fn=lambda x: x > 0.0, margin=4),
         CenterSpatialCropd(keys=keys, roi_size=(-1, -1, 155)),
-        SpatialPadd(keys=keys, spatial_size=(240, 240, 155)),
+        SpatialPadd(keys=keys, spatial_size=(180, 210, 155)),
         SaveImaged(keys=keys, output_dir=output_subject_path, output_postfix="final",
                             output_ext=".nii.gz", resample=False, print_log=False, separate_folder=False)
     ])

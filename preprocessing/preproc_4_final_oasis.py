@@ -62,7 +62,7 @@ async def process_mr_session(input_session_path, output_session_path):
         ScaleIntensityd(all_keys),
         CropForegroundd(keys=all_keys, source_key="T1w", select_fn=lambda x: x > 0.01, margin=4),
         CenterSpatialCropd(keys=all_keys, roi_size=(-1, -1, 155)),
-        SpatialPadd(keys=all_keys, spatial_size=(240, 240, 155)),
+        SpatialPadd(keys=all_keys, spatial_size=(180, 210, 155)),
     ])
     transformed_images = transform_pipeline(loaded_images)
 

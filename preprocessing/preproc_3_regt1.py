@@ -21,13 +21,14 @@ def main():
     os.makedirs(out_dataset_path, exist_ok=True)
 
     finished_subdirs = set()
-    if args.csv:
-        if os.path.exists(args.checkpoint):
-            with open(args.checkpoint, newline='') as csvfile:
-                csv_content = csv.reader(csvfile, delimiter=' ', quotechar='|')
-                for row in csv_content:
-                    finished_subdirs.add(row[0])
+    if os.path.exists(args.checkpoint):
+        with open(args.checkpoint, newline='') as csvfile:
+            print("Reading checkpoint file...")
+            csv_content = csv.reader(csvfile, delimiter=' ', quotechar='|')
+            for row in csv_content:
+                finished_subdirs.add(row[0])
 
+    subdirs = []
     for dir in os.listdir(in_dataset_path):
         if os.path.isdir(os.path.join(in_dataset_path, dir)) and not dir in finished_subdirs:
             subdirs.append(dir)
