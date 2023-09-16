@@ -109,7 +109,8 @@ def run_input_fusion_training(
                 output_table_filename: str, 
                 plot_out_dir: str,
                 learning_rate: float,
-                reg_weight: float):
+                reg_weight: float,
+                use_sgd: bool):
     
     max_epochs = epochs
 
