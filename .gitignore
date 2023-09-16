@@ -115,3 +115,4 @@ __MACOSX/
 runs/
 pretrained/
 ds001233/
+logs/
