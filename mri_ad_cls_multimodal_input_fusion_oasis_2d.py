@@ -31,6 +31,8 @@ from itertools import combinations
 import csv
 import torch.nn as nn
 
+set_determinism(seed=42069)
+
 def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transform: Transform, cache_rate: float, modality_names: list, missing_modality: str, resolution: int):
     train_df = pd.read_csv(csv_path, sep=";")
     train_df.fillna('', inplace=True)
@@ -98,7 +100,17 @@ def save_loss_plot(train_loss_values, val_loss_values, modality_names, plot_out_
     filename = f"loss_curve_{'_'.join(modality_names)}.png"
     plt.savefig(os.path.join(plot_out_directory, filename), dpi=300, bbox_inches='tight')  # Save with desired resolution and tight bounding box
 
-def run_input_fusion_training(modality_names: list, dataset_root: str, epochs: int, batch_size: int, missing_modality: str, output_table_filename: str, plot_out_dir: str):
+def run_input_fusion_training(
+                modality_names: list,
+                dataset_root: str,
+                epochs: int,
+                batch_size: int,
+                missing_modality: str,
+                output_table_filename: str, 
+                plot_out_dir: str,
+                learning_rate: float,
+                reg_weight: float):
+    
     max_epochs = epochs
 
     resolution = 256
@@ -154,7 +166,7 @@ def run_input_fusion_training(modality_names: list, dataset_root: str, epochs: i
     model = model.to(device=device)
 
     loss_function = torch.nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters(), 1e-5)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=reg_weight)
     scaler = torch.cuda.amp.GradScaler()
     val_interval = 1
     auc_metric = ROCAUCMetric()
@@ -272,10 +284,11 @@ def main():
     parser.add_argument('--ablation', action='store_true', help="Run with all modality combinations")
     parser.add_argument("--missing_modality", type=str, help="Values to use for missing modality in a sample (zeros, gauss or mask)")
     parser.add_argument("--plots", type=str, help="Directory to store loss plots in.")
+    parser.add_argument("--optim_lr", default=1e-5, type=float, help="optimization learning rate")
+    parser.add_argument("--reg_weight", default=1e-5, type=float, help="regularization weight")
     args = parser.parse_args()
 
-    # TODO: add csv paths, model out dir, resolution, missing_modality img path, zero gradient flag
-    # TODO: update learning rate and weight_decay
+    # TODO: add csv paths, model out dir, resolution, missing_modality img path
 
     all_modalities = ["MR T1w", "MR T2w", "MR T2*", "MR FLAIR", "MR TOF-MRA"]
 
@@ -290,16 +303,30 @@ def main():
             combos = list(combinations(all_modalities, i))
             for combination in combos:
                 print(f"Running input level fusion training with modality {combination} and {args.missing_modality}...")
-                run_input_fusion_training(modality_names=list(combination), dataset_root=args.dataset, epochs=args.epochs,
-                                           batch_size=args.batch_size, missing_modality=args.missing_modality, output_table_filename=output_table_filename, plot_out_dir=args.plots)
+                run_input_fusion_training(modality_names=list(combination),
+                                            dataset_root=args.dataset,
+                                            epochs=args.epochs,
+                                            batch_size=args.batch_size,
+                                            missing_modality=args.missing_modality,
+                                            output_table_filename=output_table_filename,
+                                            plot_out_dir=args.plots,
+                                            learning_rate=args.optim_lr,
+                                            reg_weight=args.reg_weight)
     else:
         excluded_modalities = args.exclude_modalities.split(",")
         for mod in excluded_modalities:
             mod = mod.strip()
             while(mod in all_modalities):
                 all_modalities.remove(mod)
-        run_input_fusion_training(modality_names=all_modalities, dataset_root=args.dataset, epochs=args.epochs,
-                                   batch_size=args.batch_size, missing_modality=args.missing_modality, output_table_filename=output_table_filename, plot_out_dir=args.plots)
+        run_input_fusion_training(modality_names=all_modalities,
+                                    dataset_root=args.dataset,
+                                    epochs=args.epochs,
+                                    batch_size=args.batch_size,
+                                    missing_modality=args.missing_modality,
+                                    output_table_filename=output_table_filename,
+                                    plot_out_dir=args.plots,
+                                    learning_rate=args.optim_lr,
+                                    reg_weight=args.reg_weight)
 
 if __name__ == "__main__":
     main()
