@@ -30,6 +30,7 @@ from itertools import combinations
 import csv
 import torch.nn as nn
 from pconv_channel import PConv2dChannel
+import torch.nn.functional as F
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -45,12 +46,14 @@ def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transfor
         data_dict = {}
         has_non_empty = False
         mask = torch.zeros((len(modality_names), resolution, resolution))
+        vec = torch.zeros((len(modality_names)))
         for idx, modality in enumerate(modality_names):
             file_path = row[modality]
             if file_path:
                 has_non_empty = True
                 data_dict[modality] = os.path.join(dataset_root, file_path)
                 mask[idx] = 1
+                vec[idx] = 1
             else:
                 if missing_modality == "gauss":
                     data_dict[modality] = os.path.join(placeholder_dir, "gauss_2d_256.nii.gz")
@@ -60,6 +63,7 @@ def create_oasis_3_multimodal_dataset(csv_path: str, dataset_root: str, transfor
             continue
         data_dict["label"] = row["label"]
         data_dict["mask"] = mask
+        data_dict["vec"] = vec
         train_data.append(data_dict)
     return CacheDataset(data=train_data, transform=transform, cache_rate=cache_rate, num_workers=5, copy_cache=False)
 
@@ -126,6 +130,8 @@ def run_input_fusion_training(
         gpu_keys = ["image"]
         if missing_modality == "mask":
             gpu_keys.append("mask")
+        if missing_modality == "gate":
+            gpu_keys.append("vec")
         transform_list.extend([
             Resized(keys=modality_names, spatial_size=resolution, size_mode="longest"),
             SpatialPadd(keys=modality_names, spatial_size=(resolution, resolution)),
@@ -180,12 +186,47 @@ def run_input_fusion_training(
             x, _ = self.pconv(x, mask)
             x = self.densenet(x)
             return x
+        
+    class MaskedSoftmax(nn.Module):
+        def __init__(self, dim=1):
+            super(MaskedSoftmax, self).__init__()
+            self.dim = dim
+
+        def forward(self, logits, mask):
+            # Set masked logits to a large negative value
+            masked_logits = logits + ((1 - mask) * -1e9)
+            masked_logits = masked_logits + (mask * 10)
+            return F.softmax(masked_logits, dim=self.dim)
+        
+    class GatedModel(nn.Module):
+        def __init__(self, in_channels: int):
+            super(GatedModel, self).__init__()
+            
+            hidden_dim = 256
+            self.in_channels = in_channels
+
+            self.modality_scaler = nn.Sequential(
+                nn.Linear(in_features=in_channels, out_features=hidden_dim),
+                nn.ReLU(),
+                nn.Linear(in_features=hidden_dim, out_features=in_channels),
+            )
+
+            self.densenet = DenseNet121(spatial_dims=2, in_channels=in_channels, out_channels=1)
+
+        def forward(self, x, vec):
+            logits = self.modality_scaler(vec)
+            modality_weights = (MaskedSoftmax()(logits, vec) / torch.sum(vec, 1).unsqueeze(-1)) * self.in_channels
+            modality_weights = modality_weights.unsqueeze(-1).unsqueeze(-1)
+            x = self.densenet(x * modality_weights)
+            return x
 
     model = DenseNet121(spatial_dims=2, in_channels=len(modality_names), out_channels=1)
     if missing_modality == "mask":
         model = MaskedModel(densenet=model)
     elif missing_modality == "pconv":
         model = PConvModel(in_channels=len(modality_names))
+    elif missing_modality == "gate":
+        model = GatedModel(in_channels=len(modality_names))
 
     model = model.to(device=device)
 
@@ -229,7 +270,7 @@ def run_input_fusion_training(
         #     print("Early stopping...")
         #     break
 
-        if epoch >= max_epochs * 0.5 or epoch >= max_epochs * 0.75:
+        if (epoch + 1) % 10 == 0:
             for g in optimizer.param_groups:
                 g['lr'] = g['lr'] * 0.1
 
@@ -246,11 +287,15 @@ def run_input_fusion_training(
                 inputs, labels = batch_data["image"].to(device), batch_data["label"].to(device)
                 if missing_modality == "mask" or missing_modality == "pconv":
                     mask = batch_data["mask"].to(device)
+                elif missing_modality == "gate":
+                    vec = batch_data["vec"].to(device)
 
                 optimizer.zero_grad()
                 with torch.cuda.amp.autocast():
                     if missing_modality == "mask" or missing_modality == "pconv":
                         outputs = model(inputs, mask)
+                    elif missing_modality == "gate":
+                        outputs = model(inputs, vec)
                     else:
                         outputs = model(inputs)
                     
@@ -275,15 +320,18 @@ def run_input_fusion_training(
             val_step = 0
             for val_data in tqdm(val_loader, "Validation"):
                 val_step += 1
-                val_images, val_labels, val_masks = (
+                val_images, val_labels, val_masks, val_vecs = (
                     val_data["image"].to(device),
                     val_data["label"].to(device),
                     val_data["mask"].to(device),
+                    val_data["vec"].to(device),
                 )
                 if missing_modality == "mask":
                     model_output = model.densenet(val_images)
                 elif missing_modality == "pconv":
                     model_output = model(val_images, val_masks)
+                elif missing_modality == "gate":
+                    model_output = model(val_images, val_vecs)
                 else:
                     model_output = model(val_images)
                 
@@ -319,6 +367,18 @@ def run_input_fusion_training(
                 f" at epoch: {best_metric_epoch}"
             )
         writer.add_scalars("Loss", {"Training": avg_epoch_train_loss, "Validation": avg_epoch_val_loss}, epoch)
+        if missing_modality == "gate":
+            vec = torch.ones(len(modality_names))
+            dev_vec = vec.to(device)
+            print(f"Weights all:")
+            print(MaskedSoftmax(dim=0)(model.modality_scaler(dev_vec), dev_vec))
+            
+            for idx, name in enumerate(modality_names):
+                vec_mod = torch.ones(len(modality_names))
+                vec_mod[idx] = 0
+                dev_vec = vec_mod.to(device)
+                print(f"Weights w/o {name}:")
+                print(MaskedSoftmax(dim=0)(model.modality_scaler(dev_vec), dev_vec))
 
     print("------------------------------------")
     print(f"Training completed for modalites {','.join(short_mod_names)}")
@@ -335,7 +395,7 @@ def main():
     parser.add_argument("--batch_size", default=16, type=int, help="batch size")
     parser.add_argument("--exclude_modalities", default="", type=str, help="modalities to use")
     parser.add_argument('--ablation', action='store_true', help="Run with all modality combinations")
-    parser.add_argument("--missing_modality", type=str, help="Values to use for missing modality in a sample (zeros, gauss, mask, pconv)")
+    parser.add_argument("--missing_modality", type=str, help="Values to use for missing modality in a sample (zeros, gauss, mask, pconv, gate)")
     parser.add_argument("--optim_lr", default=1e-5, type=float, help="optimization learning rate")
     parser.add_argument("--reg_weight", default=1e-5, type=float, help="regularization weight")
     parser.add_argument("--csv_path", type=str, help="directory to the dataset csv files")
