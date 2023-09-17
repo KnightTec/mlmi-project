@@ -365,9 +365,9 @@ def run_input_fusion_training(
             print(y_numpy)
 
             # Precision, Recall and F1
-            precision = precision_score(y_numpy, y_pred_binary_numpy)
-            recall = recall_score(y_numpy, y_pred_binary_numpy)
-            f1 = f1_score(y_numpy, y_pred_binary_numpy)
+            precision = precision_score(y_numpy, y_pred_binary_numpy, zero_division=0)
+            recall = recall_score(y_numpy, y_pred_binary_numpy, zero_division=0)
+            f1 = f1_score(y_numpy, y_pred_binary_numpy, zero_division=0)
 
             del y_pred_act, y_onehot
             if epoch_val_loss < best_val_loss:
