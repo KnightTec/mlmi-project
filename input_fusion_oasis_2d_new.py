@@ -1,7 +1,7 @@
 import os
 import torch
 import numpy as np
-from sklearn.metrics import classification_report
+from sklearn.metrics import precision_score, recall_score, f1_score
 
 from monai.data import decollate_batch, CacheDataset, ThreadDataLoader
 from monai.metrics import ROCAUCMetric
@@ -194,7 +194,7 @@ def run_input_fusion_training(
 
         def forward(self, logits, mask):
             # Set masked logits to a large negative value
-            masked_logits = logits + ((1 - mask) * -1e9)
+            masked_logits = logits + ((1 - mask) * -1e7)
             masked_logits = masked_logits + (mask * 10)
             return F.softmax(masked_logits, dim=self.dim)
         
@@ -255,15 +255,19 @@ def run_input_fusion_training(
 
     model_file_name = f"DenseNet121_ad_cls_oasis_3_input_fusion_{'_'.join(short_mod_names)}_{missing_modality}.pth"
 
-    best_metric = -1
-    best_metric_epoch = -1
-    metric_values = []
+    best_val_loss = 1000000
+    best_val_loss_epoch = -1
+    best_model_auc = -1
+    best_modal_accuracy = -1
+    best_model_precision = -1
+    best_model_recall = -1
+    best_model_f1 = -1
 
+    auc_metric = ROCAUCMetric()
     y_pred_trans = Compose([Activations(sigmoid=True)])
 
     writer = SummaryWriter(log_dir=os.path.join(logdir, f"{'_'.join(short_mod_names)}_{missing_modality}"))
-    prev_epoch_val_loss = 100000
-    epochs_without_val_loss_improvement = 0
+
     for epoch in range(max_epochs):
 
         # if epochs_without_val_loss_improvement >= early_stopping:
@@ -278,7 +282,7 @@ def run_input_fusion_training(
         avg_epoch_train_loss = 0
         avg_epoch_val_loss = 0
         with tqdm(train_loader, unit="batch") as tepoch:
-            epoch_loss = 0
+            epoch_train_loss = 0
             step = 0
             for batch_data in tepoch:
                 step += 1
@@ -305,11 +309,11 @@ def run_input_fusion_training(
                 scaler.step(optimizer)
                 scaler.update()
 
-                epoch_loss += loss.item()
+                epoch_train_loss += loss.item()
                 tepoch.set_postfix(loss=loss.item())
             
-            epoch_loss /= step
-            avg_epoch_train_loss = epoch_loss
+            epoch_train_loss /= step
+            avg_epoch_train_loss = epoch_train_loss
 
         # Validation
         model.eval()
@@ -341,32 +345,54 @@ def run_input_fusion_training(
             epoch_val_loss /= val_step
             avg_epoch_val_loss = epoch_val_loss
 
-            if epoch_val_loss >= prev_epoch_val_loss:
-                epochs_without_val_loss_improvement += 1
-
-            prev_epoch_val_loss = epoch_val_loss
-            
             y_onehot = torch.cat([i for i in decollate_batch(y, detach=False)], dim=0)
             y_pred_act = torch.cat([y_pred_trans(i) for i in decollate_batch(y_pred)], dim=0)
             auc_metric(y_pred_act, y_onehot)
-            result = auc_metric.aggregate()
+            auc = auc_metric.aggregate()
             auc_metric.reset()
-            metric_values.append(result)
-            acc_value = torch.eq((y_pred_act > 0.5).long(), y)
+            
+            # Convert predictions to binary (1 or 0) based on threshold of 0.5
+            y_pred_binary = (y_pred_act > 0.5).long()
+
+            # Accuracy
+            acc_value = torch.eq(y_pred_binary, y)
             acc_metric = acc_value.float().mean().item()
+
+            # Convert tensors to numpy for sklearn metrics
+            y_numpy = y_onehot.cpu().numpy()
+            y_pred_binary_numpy = y_pred_binary.cpu().numpy()
+            print(y_pred_binary_numpy)
+            print(y_numpy)
+
+            # Precision, Recall and F1
+            precision = precision_score(y_numpy, y_pred_binary_numpy)
+            recall = recall_score(y_numpy, y_pred_binary_numpy)
+            f1 = f1_score(y_numpy, y_pred_binary_numpy)
+
             del y_pred_act, y_onehot
-            if result > best_metric:
-                best_metric = result
-                best_metric_epoch = epoch + 1
+            if epoch_val_loss < best_val_loss:
+                best_val_loss = epoch_val_loss
+
+                best_model_auc = auc
+                best_modal_accuracy = acc_metric
+                best_model_precision = precision
+                best_model_recall = recall
+                best_model_f1 = f1
+
+                best_val_loss_epoch = epoch + 1
                 torch.save(model.state_dict(), os.path.join(out_model_dir, model_file_name))
-                print("saved new best metric model")
+                print("saved new best val loss model")
             print(
-                f"current epoch: {epoch + 1} current AUC: {result:.4f}"
-                f" current accuracy: {acc_metric:.4f}"
-                f" best AUC: {best_metric:.4f}"
-                f" at epoch: {best_metric_epoch}"
+                f"Current epoch: {epoch + 1}"
+                f" Best AUC: {best_model_auc:.4f}"
+                f" Best Accuracy: {best_modal_accuracy:.4f}"
+                f" Best Precision: {best_model_precision:.4f}"
+                f" Best Recall: {best_model_recall:.4f}"
+                f" Best F1: {best_model_f1:.4f}"
+                f" at epoch: {best_val_loss_epoch}"
             )
         writer.add_scalars("Loss", {"Training": avg_epoch_train_loss, "Validation": avg_epoch_val_loss}, epoch)
+
         if missing_modality == "gate":
             vec = torch.ones(len(modality_names))
             dev_vec = vec.to(device)
@@ -382,11 +408,11 @@ def run_input_fusion_training(
 
     print("------------------------------------")
     print(f"Training completed for modalites {','.join(short_mod_names)}")
-    print(f"Best AUC = {best_metric:.5f} " f"at epoch {best_metric_epoch}")
+    print(f"Best AUC = {best_val_loss:.5f} " f"at epoch {best_val_loss_epoch}")
 
     with open(output_table_filename, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([','.join(short_mod_names), best_metric, best_metric_epoch])
+        writer.writerow([','.join(short_mod_names), best_val_loss, best_val_loss_epoch])
     
 def main():
     parser = argparse.ArgumentParser(description="Multimoda Alzheimer's Classsification Training")
