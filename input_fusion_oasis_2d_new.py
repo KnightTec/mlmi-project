@@ -361,8 +361,6 @@ def run_input_fusion_training(
             # Convert tensors to numpy for sklearn metrics
             y_numpy = y_onehot.cpu().numpy()
             y_pred_binary_numpy = y_pred_binary.cpu().numpy()
-            print(y_pred_binary_numpy)
-            print(y_numpy)
 
             # Precision, Recall and F1
             precision = precision_score(y_numpy, y_pred_binary_numpy, zero_division=0)
@@ -408,7 +406,7 @@ def run_input_fusion_training(
 
     print("------------------------------------")
     print(f"Training completed for modalites {','.join(short_mod_names)}")
-    print(f"Best AUC = {best_val_loss:.5f} " f"at epoch {best_val_loss_epoch}")
+    print(f"Best AUC = {best_model_auc:.5f} " f"at epoch {best_val_loss_epoch}")
 
     with open(output_table_filename, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
