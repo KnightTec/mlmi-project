@@ -11,7 +11,7 @@ Self-supervised Multimodal Representation Learning - MLMI SS23
 - [DenseNet Fusion (Input Level with Partial Convolution and Soft Gating)](https://github.com/KnightTec/mlmi-project/blob/main/input_fusion_oasis_2d_new.py)
 - [MAE Fusion(Unimodal)](https://github.com/KnightTec/mlmi-project/blob/main/M3AE_unimodal_T2.ipynb)
 - [MAE Fusion(Input level)](https://github.com/KnightTec/mlmi-project/blob/main/mae_input_fusion_oasis_2d.ipynb)
-- [MAE pretraining](https://github.com/KnightTec/mlmi-project/blob/main/M3AE_pretrain2.ipynb)
+- [MAE Pretraining](https://github.com/KnightTec/mlmi-project/blob/main/M3AE_pretrain2.ipynb)
 - [MAE Miriad Classification](https://github.com/KnightTec/mlmi-project/blob/main/Miriad_classification.ipynb)
 
 ## Google Drive
