@@ -1,6 +1,8 @@
 # mlmi-project
 Self-supervised Multimodal Representation Learning - MLMI SS23
 
+## [Preprocessing Scripts](https://github.com/KnightTec/mlmi-project/tree/main/preprocessing)
+
 ## Experiment Scripts
 - [Alzheimer’s classification with pre-trained Swin Transformer](https://github.com/KnightTec/mlmi-project/blob/main/mri_classifier_miriad.ipynb)
 - [DenseNet Fusion (Unimodal)](https://github.com/KnightTec/mlmi-project/blob/main/mri_ad_cls_unimodal_oasis_2d.py)
