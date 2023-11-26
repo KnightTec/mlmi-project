@@ -3,6 +3,17 @@ Self-supervised Multimodal Representation Learning - MLMI SS23
 
 ## [Preprocessing Scripts](https://github.com/KnightTec/mlmi-project/tree/main/preprocessing)
 
+The MRI brain scan pre-processing pipeline developed for this project performs the following steps:
+1. Re-orientation to LPS
+2. Intra-session resampling of T2, T2*, FLAIR, and MRA to T1
+3. Isotropic resampling to a resolution of 1mm
+4. Skull stripping using SynthStrip 
+5. Intra-session rigid registration of T2, T2*, FLAIR, and MRA to T1 using
+SynthMorph
+6. Centering the brain inside the volume and cropping to a resolution of
+180 × 210 × 155
+
+
 ## Experiment Scripts
 - [Alzheimer’s classification with pre-trained Swin Transformer](https://github.com/KnightTec/mlmi-project/blob/main/mri_classifier_miriad.ipynb)
 - [DenseNet Fusion (Unimodal)](https://github.com/KnightTec/mlmi-project/blob/main/mri_ad_cls_unimodal_oasis_2d.py)
