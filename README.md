@@ -1,7 +1,7 @@
 # mlmi-project
 Self-supervised Multimodal Representation Learning - MLMI SS23
 
-## [Preprocessing Scripts](https://github.com/KnightTec/mlmi-project/tree/main/preprocessing)
+## [Pre-processing Scripts](https://github.com/KnightTec/mlmi-project/tree/main/preprocessing)
 
 The MRI brain scan pre-processing pipeline developed for this project performs the following steps:
 1. Re-orientation to LPS
@@ -13,6 +13,11 @@ SynthMorph
 6. Centering the brain inside the volume and cropping to a resolution of
 180 × 210 × 155
 
+Before pre-processing:
+![image](oasis_00_raw.png)
+
+After pre-processing:
+![image](oasis_00_proc.png)
 
 ## Experiment Scripts
 - [Alzheimer’s classification with pre-trained Swin Transformer](https://github.com/KnightTec/mlmi-project/blob/main/mri_classifier_miriad.ipynb)
