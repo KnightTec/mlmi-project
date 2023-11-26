@@ -1,5 +1,5 @@
 # mlmi-project
-Self-supervised Multimodal Representation Learning - MLMI SS23
+Self-supervised Multimodal Representation Learning - Machine Learning in Medical Imaging Course Project Summer 2023
 
 ## [Pre-processing Scripts](https://github.com/KnightTec/mlmi-project/tree/main/preprocessing)
 
