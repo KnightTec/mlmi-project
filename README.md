@@ -1,6 +1,8 @@
 # mlmi-project
 Self-supervised Multimodal Representation Learning - Machine Learning in Medical Imaging Course Project Summer 2023
 
+Team: Sven Lüpke, Ufuk Demir, Pei-Ran Huang, Ding Zhou
+
 ## [Pre-processing Scripts](https://github.com/KnightTec/mlmi-project/tree/main/preprocessing)
 
 The MRI brain scan pre-processing pipeline developed for this project performs the following steps:
